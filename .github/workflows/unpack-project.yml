@@ -1,0 +1,40 @@
+# Extrait project.zip (projet Unity) a la racine du depot, puis enregistre le resultat.
+# A creer dans le depot sous le nom : .github/workflows/unpack-project.yml
+# Declenchement : a chaque envoi d'un nouveau project.zip sur la branche main.
+name: Unpack Unity project
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - project.zip
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract project.zip
+        run: |
+          test -f project.zip
+          rm -rf Assets Packages ProjectSettings
+          unzip -q -o project.zip
+          ls -la
+
+      - name: Commit extracted project
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A .
+          if git diff --cached --quiet; then
+            echo "Aucun changement a enregistrer."
+          else
+            git commit -m "Extraction de project.zip"
+            git push
+          fi
